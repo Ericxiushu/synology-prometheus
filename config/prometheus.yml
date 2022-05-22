@@ -34,3 +34,25 @@ scrape_configs:
         regex: (.*)
         replacement: ${1}:9116
         target_label: __address__
+  - job_name: 'blackbox-exporter'
+    metrics_path: /probe
+    params:
+      module: [icmp]  # Look for a HTTP 200 response.
+    static_configs:
+      - targets:
+        - baidu.com    # Target to probe with http.
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 192.168.33.10:9115
+  # 动态加载被采集配置
+  - job_name: 'file_sd'
+    scrape_interval: 10s
+    file_sd_configs:
+    - refresh_interval: 10s
+      files:
+       - /data/conf/*.yml
+       - /data/conf/*.json

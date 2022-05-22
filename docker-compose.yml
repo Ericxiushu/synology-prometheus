@@ -2,25 +2,31 @@ version: "3.8"
 services:
   prometheus:
     container_name: prometheus
-    image: quay.io/prometheus/prometheus:v2.26.0
+    image: quay.io/prometheus/prometheus:latest
     volumes:
       - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./rules:/etc/prometheus/rules
-    command: "--config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus"
+      - ./data/prometheus:/prometheus
+      - ./data/conf:/data/conf
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     ports:
       - 9090:9090
 
   grafana:
     container_name: grafana
-    image: grafana/grafana
+    image: grafana/grafana:latest
     ports:
       - "3000:3000"
     depends_on:
       - prometheus
+    volumes:
+      - ./grafana:/var/lib/grafana
 
   alertmanager:
     container_name: alertmanager
-    image: prom/alertmanager:v0.21.0
+    image: prom/alertmanager:latest
     ports:
       - 9093:9093
     volumes:
@@ -29,7 +35,7 @@ services:
   
   node-exporter:
     privileged: true
-    image: prom/node-exporter
+    image: prom/node-exporter:latest
     container_name: node-exporter
     restart: unless-stopped
     ports:
@@ -55,3 +61,14 @@ services:
       - 9116:9116
     command:
       - "--config.file=/etc/snmp_exporter/snmp.yml"
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox_exporter
+    restart: unless-stopped
+    ports:
+      - 9115:9115
+    volumes:
+      - ./blackbox_exporter/blackbox.yml:/config/blackbox.yml
+    command: 
+      - "--config.file=/config/blackbox.yml"
